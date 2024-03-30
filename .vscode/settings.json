@@ -1,0 +1,10 @@
+{
+	"cSpell.words": ["bdata", "PARSEMAIL", "pmail"],
+	"files.associations": {
+		"*.cpp": "cpp",
+		"*.yml": "yaml",
+		"net.h": "c",
+		"common.h": "c",
+		"parsemail.h": "c"
+	}
+}
