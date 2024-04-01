@@ -1,0 +1,26 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "C/C++ Debug",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/main.o", // 可执行文件的路径
+			"args": [], // 可执行文件的参数
+			"stopAtEntry": false, // 是否在程序入口处停止
+			"cwd": "${workspaceFolder}", // 调试器的工作目录
+			"environment": [], // 运行程序时使用的环境变量
+			"externalConsole": false, // 是否使用外部控制台
+			"MIMode": "gdb", // 调试器的工作模式
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			],
+			"preLaunchTask": "build", // 在启动调试会话之前执行的任务
+			"miDebuggerPath": "/usr/bin/gdb" // 调试器的路径
+		}
+	]
+}

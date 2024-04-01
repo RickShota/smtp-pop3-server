@@ -6,5 +6,6 @@
 */
 
 int sendMail(int *sockfd, const char *mailName) {
-
+  // TODO
+  return 0;
 }

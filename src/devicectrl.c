@@ -142,6 +142,7 @@ int emitCommand(sub_t *subject) {
 
 // 生成一个新的邮件文件名
 char *getCreatMailName(const char *userName, char *mailName) {
+  printf("开始生成一个新的邮件文件名...\n");
   char buf[128];
   for(int i = 1;; i++) {
     char num[10];
@@ -154,6 +155,7 @@ char *getCreatMailName(const char *userName, char *mailName) {
     strcat(buf, ".mail");
     if(access(buf, F_OK) == -1) {
       strcpy(mailName, buf);
+      printf("生成成功，邮件文件名为：%s\n", mailName);
       return NULL;
     }
   }

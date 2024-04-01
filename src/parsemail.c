@@ -11,12 +11,10 @@ int verUsername(const char *username, table_t *userTable) {
     return -1;
   FILE *fp = fopen(USER_FILE, "r");
   if(NULL == fp) {
-
     perror("fopen error");
     return -1;
   }
   table_t temp = { 0 };
-
   while(fscanf(fp, "%s %s\n", temp.username, temp.password) != EOF) {
     if(!strncmp(username, temp.username, strlen(temp.username))) {
       memcpy(userTable, &temp, sizeof(temp));
@@ -35,26 +33,24 @@ int verPassword(const char *password, table_t *userTable) {
   return -1;
 }
 
+// 解析邮件
 int parseMail(struct mail *pmail, sub_t *subject) {
   if(NULL == pmail || NULL == subject)
     return -1;
+  printf("开始解析邮件...\n");
   const char *sub = "Subject:";
   char *start = strstr(pmail->raw, sub) + 9;
-
   if(NULL == start)
     return -1;
   char *end = strstr(start, "\r\n");
-
   if(NULL == end)
     return -1;
   int len = end - start + 1;
   char buf[128] = "";
-
   strncpy(buf, start, len);
   const char *command = strtok(buf, " ");
   if(NULL == command)
     return -1;
-
   strcpy(subject->command, command);
   if(!strcmp(command, "8LED")) {
     const char *bulb = strtok(NULL, " ");

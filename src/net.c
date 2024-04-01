@@ -10,11 +10,11 @@
 #include "common.h"
 
 int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
-  if(sockfd < 2 || NULL == pmail)
+  if(sockfd < 2 || pmail == NULL)
     return -1;
-
-  char *response220 = "220 192.168.31.58 ok\r\n";
-  char *response250_HELO = "250-192.168.31.58\r\n250-PIPELINING\r\n250-SIZE 52428800\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN\r\n250-MAILCOMPRESS\r\n250 BITMIME\r\n";
+  printf("开始处理SMTP连接...\n");
+  char *response220 = "220 192.168.125.133 ok\r\n";
+  char *response250_HELO = "250-192.168.125.133\r\n250-PIPELINING\r\n250-SIZE 52428800\r\n250-AUTH LOGIN PLAIN\r\n250-AUTH=LOGIN\r\n250-MAILCOMPRESS\r\n250 BITMIME\r\n";
   char *response334_user = "334 VXNlcm5hbWU6\r\n";
   char *response334_pass = "334 UGFzc3dvcmQ6\r\n";
 
@@ -30,37 +30,43 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
     perror("HELO or EHLO error");
     return -1;
   }
+  // printf("SMTP 220, recv %s\n", buf);
 
   write(sockfd, response250_HELO, strlen(response250_HELO));
   read(sockfd, buf, sizeof(buf) - 1);
   if(strncmp(buf, "AUTH LOGIN", 10)) {
     perror("AUTH LOGIN error");
-
     return -1;
   }
+  // printf("SMTP 250, recv %s\n", buf);
+
   write(sockfd, response334_user, strlen(response334_user));
   if(getUsername(sockfd, table)) {
     perror("getUsername error");
     return -1;
   }
-  write(sockfd, response334_pass, strlen(response334_pass));
+  // printf("SMTP 334, username %s\n", table->username);
 
+  write(sockfd, response334_pass, strlen(response334_pass));
   if(getPassword(sockfd, table)) {
     perror("getPassword error");
     return -1;
   }
+  // printf("SMTP 334, password %s\n", table->password);
 
   write(sockfd, response235, strlen(response235));
   if(getFromAddress(sockfd, pmail)) {
     perror("getFromAddress error");
     return -1;
   }
+  // printf("SMTP 235, FromAddress %s\n", pmail->send);
 
   write(sockfd, response250_ok, strlen(response250_ok));
   if(getToAddress(sockfd, pmail)) {
     perror("getToAddress error");
     return -1;
   }
+  // printf("SMTP 250, ToAddress %s\n", pmail->recv);
 
   write(sockfd, response250_ok, strlen(response250_ok));
   read(sockfd, buf, sizeof(buf) - 1);
@@ -68,12 +74,14 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
     perror("DATA error");
     return -1;
   }
+  // printf("SMTP 250, recv %s\n", buf);
 
   write(sockfd, response_354, strlen(response_354));
   if(getBody(sockfd, pmail)) {
     perror("getBody error");
     return -1;
   }
+  // printf("SMTP 354\n");
 
   write(sockfd, response250_ok, strlen(response250_ok));
   sleep(1);
@@ -82,12 +90,16 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
     perror("QUIT error");
     return -1;
   }
+  // printf("SMTP 250, recv %s\n", buf);
 
   write(sockfd, response_221, strlen(response_221));
+  // printf("SMTP 221\n");
+  printf("smtp连接结束\n");
   return 0;
 }
 
 int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
+  printf("开始处理pop3连接...\n");
   char *response_server = "+OK Pop3 server\r\n";
   char *response_ok = "+OK \r\n";
   char *response_300 = "+0K 1 300 \r\n";
@@ -150,6 +162,6 @@ int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
   }
 
   write(sockfd, response_ok, strlen(response_ok));
-
+  printf("pop3连接结束\n");
   return 0;
 }
