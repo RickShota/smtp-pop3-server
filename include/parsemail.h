@@ -8,9 +8,6 @@
 #define PARSEMAIL_H
 
 #include "common.h"
-#include "base64.h"
-
-char *base64Decode(const char *bdata);
 
 int verUsername(const char *username, table_t *userTable);
 

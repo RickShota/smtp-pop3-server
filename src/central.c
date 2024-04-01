@@ -3,9 +3,11 @@
  * @author 黄瑞
  * @date 2024.3.30
  * @details 入口程序源文件
+ * @version 0.5
 */
 #include "common.h"
 #include "parsemail.h"
+#include "devicectrl.h"
 #include "net.h"
 
 int main(int argc, char const *argv[]) {
@@ -45,8 +47,8 @@ int main(int argc, char const *argv[]) {
     perror("listen error");
     return -1;
   } else {
-    printf("SMTP is server on %s:%d\n", IP, SMTP_PORT);
-    printf("POP3 is server on %s:%d\n", IP, POP3_PORT);
+    printf("SMTP is server on %s:%d...\n", IP, SMTP_PORT);
+    printf("POP3 is server on %s:%d...\n", IP, POP3_PORT);
   }
 
   // 创建子进程
@@ -69,17 +71,17 @@ int main(int argc, char const *argv[]) {
         close(cid);
         return -1;
       }
-      handleConnection(smtp_sid, &table, &mail);
+      handleConnection(smtp_sid, &table, mail);
       sub_t ctrl = { 0 };
       parseMail(mail, &ctrl);
-      subjectControl(mail, &ctrl);
+      // subjectControl(mail, &ctrl);
 
       char fileName[128] = "";
       printf("table.username = %s\n", table.username);
       getCreatMailName(table.username, fileName);
       createMail(cid, mail, &ctrl);
 
-      pop3Connection(pop3_sid, &table, &table, &mail);
+      pop3Connection(pop3_sid, &ctrl, &table, mail);
       free(mail);
       mail = NULL;
       close(cid);

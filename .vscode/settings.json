@@ -1,5 +1,20 @@
 {
-	"cSpell.words": ["bdata", "PARSEMAIL", "pmail"],
+	"cSpell.words": [
+		"Authenticatin",
+		"bdata",
+		"BITMIME",
+		"CHANGETABLE",
+		"devicectrl",
+		"deviceponse",
+		"dvcm",
+		"liuxiaoforever",
+		"MAILCOMPRESS",
+		"mailreceive",
+		"mailrecv",
+		"Nlcm",
+		"PARSEMAIL",
+		"pmail"
+	],
 	"files.associations": {
 		"*.cpp": "cpp",
 		"*.yml": "yaml",

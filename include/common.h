@@ -11,9 +11,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <time.h>
 
 #define MAX_MAIL (8 * 1024)
 #define MAX_ATTACHMENT (7 * 1024)
