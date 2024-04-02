@@ -1,7 +1,7 @@
 /**
  * @file parsemail.h
  * @author 黄瑞
- * @date 2024.3.20
+ * @date 2024.3.30
  * @details 邮件解析模块头文件
 */
 #ifndef PARSEMAIL_H

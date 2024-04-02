@@ -4,5 +4,6 @@
  * @date 2024.4.3
  * @details 控制响应模块头文件
 */
+#include "common.h"
 
-int sendMail(int *sockfd, const char *mailName);
+int sendMail(int sockfd, const char *mailName);

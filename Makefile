@@ -1,6 +1,6 @@
 CC = gcc
 DB = gdb
-CFLAGS = -Wall -Iinclude -lpthread
+CFLAGS = -Wall -Iinclude -lpthread -pthread
 
 # 目标文件夹
 BUILD_DIR = build

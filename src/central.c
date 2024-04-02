@@ -10,6 +10,29 @@
 #include "devicectrl.h"
 #include "net.h"
 
+void *handleSMTPConnect(void *p_cid) {
+  printf("\n子线程创建, pid = %lu\n", pthread_self());
+  int cid = *((int *)p_cid);
+  free(p_cid); p_cid = NULL;
+
+  mail_t *mail = malloc(sizeof(mail_t));
+  table_t table = { 0 };
+  // 处理连接
+  handleConnection(cid, &table, mail);
+  // 解析邮件
+  sub_t ctrl = { 0 };
+  parseMail(mail, &ctrl);
+  // 设备控制
+  subjectControl(mail, &ctrl);
+  // 组装邮件并写入邮件文件
+  createMail(cid, mail, &ctrl);
+
+  free(mail); mail = NULL;
+  close(cid);
+  printf("\n子线程结束, pid = %lu\n", pthread_self());
+  pthread_exit(NULL);
+}
+
 int main(int argc, char const *argv[]) {
   // 创建smtp套接字
   int smtp_sid = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,50 +72,33 @@ int main(int argc, char const *argv[]) {
     // printf("POP3 is server on %s:%d...\n", IP, POP3_PORT);
   }
 
-  // 创建子进程
-  for(int i = 0;; i++) {
-    pid_t pid = fork();
-    if(pid < 0) {
-      perror("fork error");
-      return -1;
-    } else if(pid == 0) {
-      printf("\n子进程创建成功, pid = %d\n", getpid());
-      mail_t *mail = malloc(sizeof(mail_t));
-      table_t table = { 0 };
-      // 接受连接
-      printf("SMTP准备连接，等待三次握手...\n");
-      int cid = accept(smtp_sid, NULL, NULL);
-      if(cid < 0) {
-        perror("accept error");
-        close(cid);
-        return -1;
-      }
-      printf("三次握手成功!\n");
-      handleConnection(cid, &table, mail);
-      printf("SMTP连接处理结束\n");
-      sub_t ctrl = { 0 };
-      // 解析邮件
-      parseMail(mail, &ctrl);
-      // 设备控制
-      // subjectControl(mail, &ctrl);
-      char fileName[128] = "";
-      // 获取新建邮件名
-      getCreatMailName(table.username, fileName);
-      // 组装邮件并写入邮件文件
-      createMail(cid, mail, &ctrl);
-
-      // pop3锁步
-      // pop3Connection(pop3_sid, &ctrl, &table, mail);
-      free(mail);
-      mail = NULL;
+  while(1) {
+    // 接受连接
+    printf("SMTP准备连接，等待三次握手...\n");
+    int cid = accept(smtp_sid, NULL, NULL);
+    if(cid < 0) {
+      perror("accept error");
       close(cid);
-    } else if(pid > 0) {
-      wait(NULL);
+      return -1;
+    }
+    printf("三次握手成功! cid = %d\n", cid);
+
+    // 创建子线程
+    pthread_t tid;
+    // 分配新的内存空间存储cid的值
+    int *p_cid = malloc(sizeof(int));
+    *p_cid = cid;
+    int ret = pthread_create(&tid, NULL, handleSMTPConnect, (void *)p_cid);
+    // 设置线程分离
+    ret = pthread_detach(tid);
+    if(ret != 0) {
+      perror("pthread_detach");
+      free(p_cid);
+      exit(EXIT_FAILURE);
     }
   }
   // 关闭套接字
   close(smtp_sid);
   // close(pop3_sid);
-
   return 0;
 }

@@ -1,7 +1,7 @@
 /**
  * @file devicectrl.c
  * @author 黄瑞
- * @date 2024.4.1
+ * @date 2024.4.2
  * @details 设备控制模块源文件
 */
 #include "devicectrl.h"
@@ -19,7 +19,6 @@ char *getName(const char *email) {
   }
   return name;
 }
-
 
 char *readFile(const char *filename) {
   FILE *file = fopen(filename, "rb");
@@ -50,6 +49,7 @@ char *readFile(const char *filename) {
 
 // 处理邮件对象和主题控制结构
 int subjectControl(const mail_t *pmail, sub_t *subject) {
+  printf("开始控制设备...\n\n");
   char command[32];
   strcpy(command, subject->command);
   if(strncmp(command, "8LED", 4) || strncmp(command, "7SHU", 4) || strncmp(command, "Moto", 4)) {
@@ -58,10 +58,9 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
   char str[] = "changeTable";
   if(!strncasecmp(command, str, strlen(str))) {
     emitUpdate(pmail, subject);
-    printf("subject->command: %s\n", subject->command);
-
-    printf("subject->bulb: %d\n", subject->bulb);
-    printf("subject->bulb_ctl: %d\n", subject->bulb_ctl);
+    printf("命令行: %s\n", subject->command);
+    printf("灯号数: %d\n", subject->bulb);
+    printf("控制信号: %d\n", subject->bulb_ctl);
     return 0;
   }
 
@@ -78,7 +77,7 @@ int emitUpdate(const mail_t *pmail, sub_t *subject) {
   char command[32] = "";
   strcpy(command, subject->command);
   if(strncpy(command, "changTable", 11)) {
-    FILE *fd = fopen("table.txt", "w");
+    FILE *fd = fopen(USER_FILE, "w");
 
     char attr[1024 * 10] = "";
     strcpy(attr, pmail->attr);
@@ -110,7 +109,7 @@ int emitCommand(sub_t *subject) {
       return -1;
     }
     subject->result = 0;
-    printf("%d 灯泡状态为 %d\n", subject->bulb, subject->bulb_ctl);
+    printf("\n%d号灯泡状态为 %d\n\n", subject->bulb, subject->bulb_ctl);
     return 0;
   } else if(strcmp(command, "7SHU") == 0) {
     if(subject->signal < 0 || subject->signal > 99) {
@@ -142,17 +141,19 @@ int emitCommand(sub_t *subject) {
 
 // 生成一个新的邮件文件名
 char *getCreatMailName(const char *userName, char *mailName) {
-  printf("开始生成一个新的邮件文件名...\n");
+  printf("开始生成新的邮件文件名...\n");
   char buf[128];
   for(int i = 1;; i++) {
     char num[10];
     sprintf(num, "%d", i);
     memset(buf, 0, sizeof(buf));
-    strcpy(buf, userName);
+    strcpy(buf, "database/");
 
+    strcat(buf, userName);
     strcat(buf, "_");
     strcat(buf, num);
     strcat(buf, ".mail");
+    // 检查文件是否存在
     if(access(buf, F_OK) == -1) {
       strcpy(mailName, buf);
       printf("生成成功，邮件文件名为：%s\n", mailName);

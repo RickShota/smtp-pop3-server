@@ -1,7 +1,7 @@
 /**
  * @file mailrecv.c
  * @author 黄瑞
- * @date 2024.3.21
+ * @date 2024.4.1
  * @details 邮件接收-SMTP通讯过程源文件
 */
 #include "mailrecv.h"
@@ -23,7 +23,7 @@ int getUsername(int sockfd, table_t *p) {
     return -1;
   }
   strcpy(p->username, str);
-  printf("username: %s\n", p->username);
+  printf("成功获取username: %s\n", p->username);
   return 0;
 }
 
@@ -41,7 +41,7 @@ int getPassword(int sockfd, table_t *p) {
   }
   // 验证成功，将用户名密码存入到验证表结构体中
   strcpy(p->password, str);
-  printf("password: %s\n", p->password);
+  printf("成功获取password: %s\n", p->password);
   return 0;
 }
 
@@ -53,9 +53,9 @@ int getFromAddress(int sockfd, mail_t *pmail) {
   int addressLen, tempLen = 0;
 
   int len = read(sockfd, buf, sizeof(buf) - 1);
-  //i在buf末尾添加字符串结束符'\0'
+  // i在buf末尾添加字符串结束符'\0'
   buf[len] = '\0';
-  //从buf中查找'<'到'>'之间的数据
+  // 从buf中查找'<'到'>'之间的数据
   if((addressStart = strchr(buf, '<')) == NULL) {
     perror("find sender address error");
     return -1;
@@ -73,7 +73,7 @@ int getFromAddress(int sockfd, mail_t *pmail) {
   temp[addressLen - 1] = '\0';
   tempLen = strlen(temp);
   strncpy(pmail->send, temp, tempLen);
-  printf("pmail->send: %s\n", pmail->send);
+  printf("成功读取发件人地址: %s\n", pmail->send);
   return 0;
 }
 
@@ -97,10 +97,10 @@ int getToAddress(int sockfd, mail_t *pmail) {
     return -1;
   }
   *end = '\0';
-  //将截取的地址存入邮件结构体中
+  // 将截取的地址存入邮件结构体中
   strncpy(pmail->recv, start, sizeof(buf) - 1);
   pmail->recv[sizeof(buf) - 1] = '\0';
-  printf("pmail->recv: %s\n", pmail->recv);
+  printf("成功读取收件人地址: %s\n", pmail->recv);
   return 0;
 }
 
@@ -117,7 +117,8 @@ int getBody(int sockfd, mail_t *pmail) {
   strncpy(temp, buf, sizeof(temp) - 1);
   temp[sizeof(temp) - 1] = '\0';
   strncat(pmail->raw, temp, strlen(temp));
-  printf("pmail->raw: %s\n", pmail->raw);
+
+  printf("成功读取邮件正文:\n%s\n", pmail->raw);
 
 
   // 查找temp中是否有filename
@@ -138,7 +139,7 @@ int getBody(int sockfd, mail_t *pmail) {
     break;
   }
 
-  printf("pmail->filename: %s\n", pmail->filename);
+  printf("文件名: %s\n", pmail->filename);
   return 0;
 }
 
@@ -172,14 +173,14 @@ int getSlave(int sockfd, mail_t *pmail) {
     break;
   }
 
-  printf("pmail->attr: %s\n", pmail->attr);
-  printf("pmail->filename; %s\n", pmail->filename);
+  printf("成功读取附件内容:\n%s\n", pmail->attr);
+  printf("文件名: %s\n", pmail->filename);
   return 0;
 }
 
 // 读取POP3协议命令，提取验证用户名并存储
 int getUserPop(int sockfd, table_t *p) {
-  printf("begin\n");
+  printf("读取POP3协议命令，提取验证用户名并存储\n");
   char buf[128] = "";
   //memset(buf, 0, sizeof(buf));
   while(!strlen(buf)) {
@@ -197,8 +198,7 @@ int getUserPop(int sockfd, table_t *p) {
 
   strncpy(str, userStart, 10);
   str[10] = '\0';
-  printf("username %s\n", str);
-  printf("verUsername before\n");
+  printf("username = %s\n", str);
 
   // 进行用户名验证
   if(verUsername(str, p) < 0) {
@@ -206,7 +206,6 @@ int getUserPop(int sockfd, table_t *p) {
     return -1;
   }
 
-  printf("verUsername after\n");
   //将用户名复制到验证表结构体 table中
   strcpy(p->username, str);
   return 0;

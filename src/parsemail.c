@@ -1,7 +1,7 @@
 /**
  * @file parsemail.h
  * @author 黄瑞
- * @date 2024.3.20
+ * @date 2024.3.30
  * @details 邮件解析模块源文件
 */
 #include "parsemail.h"
@@ -67,5 +67,6 @@ int parseMail(struct mail *pmail, sub_t *subject) {
     printf("table.txt更新成功\n");
   } else
     return -1;
+  printf("解析成功!\n\n");
   return 0;
 }

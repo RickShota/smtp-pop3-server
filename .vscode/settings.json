@@ -4,6 +4,7 @@
 		"bdata",
 		"BITMIME",
 		"CHANGETABLE",
+		"CHANGTABLE",
 		"devicectrl",
 		"deviceponse",
 		"dvcm",
@@ -20,6 +21,7 @@
 		"*.yml": "yaml",
 		"net.h": "c",
 		"common.h": "c",
-		"parsemail.h": "c"
+		"parsemail.h": "c",
+		"devicereponse.h": "c"
 	}
 }
