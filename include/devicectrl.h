@@ -22,7 +22,7 @@ int emitCommand(sub_t *subject);
 // 生成一个新的邮件文件名
 char *getCreatMailName(const char *userName, char *mailName);
 
-// 查找邮件文件名中尚未被使用的编号
+// 获取要发送的邮件文件名
 char *getSendMailName(const char *userName, char *mailName);
 
 // 创建邮件文件并发送邮件内容到指定的套接字

@@ -49,7 +49,7 @@ char *readFile(const char *filename) {
 
 // 处理邮件对象和主题控制结构
 int subjectControl(const mail_t *pmail, sub_t *subject) {
-  printf("开始控制设备...\n\n");
+  printf("尝试控制设备...\n\n");
   char command[32];
   strcpy(command, subject->command);
   if(strncmp(command, "8LED", 4) || strncmp(command, "7SHU", 4) || strncmp(command, "Moto", 4)) {
@@ -60,14 +60,14 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
     emitUpdate(pmail, subject);
     printf("命令行: %s\n", subject->command);
     printf("灯号数: %d\n", subject->bulb);
-    printf("控制信号: %d\n", subject->bulb_ctl);
+    printf("控制信号: %d\n\n", subject->bulb_ctl);
     return 0;
   }
 
   strcpy(subject->command, command);
-  printf("subject->command: %s\n", subject->command);
-  printf("subject->bulb: %d\n", subject->bulb);
-  printf("subject->bulb_ctl: %d\n", subject->bulb_ctl);
+  printf("命令行: %s\n", subject->command);
+  printf("灯号数: %d\n", subject->bulb);
+  printf("控制信号: %d\n\n", subject->bulb_ctl);
 
   return -1;
 }
@@ -114,12 +114,12 @@ int emitCommand(sub_t *subject) {
   } else if(strcmp(command, "7SHU") == 0) {
     if(subject->signal < 0 || subject->signal > 99) {
       subject->result = -1;
-      printf("调用七段数码管控制函数失败\n");
+      printf("调用七段数码管控制函数失败,信号不合法\n");
       return -1;
     }
     subject->result = 0;
 
-    printf("七段数码管控制成功\n");
+    printf("七段数码管控制成功!\n");
     return 0;
   } else if(strcmp(command, "MOTO") == 0) {
     if(subject->reva < 0 || subject->reva > 999) {
@@ -134,7 +134,7 @@ int emitCommand(sub_t *subject) {
     printf("table.txt更新成功\n");
     return 0;
   } else {
-    printf("识别不了命令字控制\n");
+    printf("识别不了命令字控制:\n");
     return -2;
   }
 }
@@ -147,33 +147,37 @@ char *getCreatMailName(const char *userName, char *mailName) {
     char num[10];
     sprintf(num, "%d", i);
     memset(buf, 0, sizeof(buf));
-    strcpy(buf, "database/");
 
+    strcpy(buf, "database/");
     strcat(buf, userName);
     strcat(buf, "_");
     strcat(buf, num);
     strcat(buf, ".mail");
-    // 检查文件是否存在
+    // 检查文件是否重名
     if(access(buf, F_OK) == -1) {
       strcpy(mailName, buf);
       printf("生成成功，邮件文件名为：%s\n", mailName);
-      return NULL;
+      return mailName;
     }
   }
   return NULL;
 }
 
-// 查找邮件文件名中尚未被使用的编号
+// 获取要发送的邮件文件名
 char *getSendMailName(const char *userName, char *mailName) {
   char buf[128];
   for(int i = 0; i < 100; i++) {
     char num[10];
     sprintf(num, "%d", i);
     memset(buf, 0, sizeof(buf));
-    strcpy(buf, userName);
+
+    strcpy(buf, "database/");
+    strcat(buf, userName);
     strcat(buf, "_");
     strcat(buf, num);
-    if(!access(buf, F_OK)) {
+    strcat(buf, ".mail");
+    // 检查文件是否存在
+    if(access(buf, F_OK) == 0) {
       strcpy(mailName, buf);
       return mailName;
     }

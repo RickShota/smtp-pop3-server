@@ -104,9 +104,9 @@ int getToAddress(int sockfd, mail_t *pmail) {
   return 0;
 }
 
-// 读取邮件正文内容并存储
+// 解析邮件正文内容并存储
 int getBody(int sockfd, mail_t *pmail) {
-  char buf[1024 * 10] = "";
+  char buf[MAX_MAIL] = "";
   char temp[1024 * 10] = "";
   int len = read(sockfd, buf, sizeof(buf) - 1);
   if(len < 0) {
@@ -119,6 +119,7 @@ int getBody(int sockfd, mail_t *pmail) {
   strncat(pmail->raw, temp, strlen(temp));
 
   printf("成功读取邮件正文:\n%s\n", pmail->raw);
+  printf("正文结束\n");
 
 
   // 查找temp中是否有filename
@@ -138,14 +139,12 @@ int getBody(int sockfd, mail_t *pmail) {
     getSlave(sockfd, pmail);
     break;
   }
-
-  printf("文件名: %s\n", pmail->filename);
   return 0;
 }
 
-// 读取邮件附件内容并存储
+// 解析邮件附件内容并存储
 int getSlave(int sockfd, mail_t *pmail) {
-  char temp[1024 * 10];
+  char temp[MAX_ATTACHMENT];
   int len;
   char *pos = NULL;
 
@@ -173,41 +172,45 @@ int getSlave(int sockfd, mail_t *pmail) {
     break;
   }
 
-  printf("成功读取附件内容:\n%s\n", pmail->attr);
+  printf("成功读取附件\n");
   printf("文件名: %s\n", pmail->filename);
+  printf("内容:\n %s\n", pmail->attr);
   return 0;
 }
 
 // 读取POP3协议命令，提取验证用户名并存储
 int getUserPop(int sockfd, table_t *p) {
-  printf("读取POP3协议命令，提取验证用户名并存储\n");
   char buf[128] = "";
-  //memset(buf, 0, sizeof(buf));
-  while(!strlen(buf)) {
-
-    read(sockfd, buf, sizeof(buf));
-    printf("buf = %s\n", buf);
+  memset(buf, 0, sizeof(buf));
+  while(read(sockfd, buf, sizeof(buf)) == 0) {
+    perror("read");
   }
-  printf("read over\n");
-  //buf[len] = '\0';
+  printf("buf = %s\n", buf);
+  // 查找用户名起始位
+  char *start = strstr(buf, "USER");
+  if(start == NULL) {
+    printf("username not found\n");
+    return 1;
+  }
+  // 文件指针移动到起始位后面
+  start += strlen("USER ");
+  // 查找用户名结束位
+  char *end = strstr(start, "\r");
+  // 提取用户名
+  int len = end - start;
+  char username[10] = "";
+  strncpy(username, start, len);
+  username[len] = '\0';
 
-  char *userStart = strstr(buf, "USER ");
-  userStart += strlen("USER ");
-  //提取用户名
-  char str[80];
-
-  strncpy(str, userStart, 10);
-  str[10] = '\0';
-  printf("username = %s\n", str);
-
+  printf("username = %s\n", username);
   // 进行用户名验证
-  if(verUsername(str, p) < 0) {
+  if(verUsername(username, p) < 0) {
     fprintf(stderr, "username diff\n");
     return -1;
   }
 
   //将用户名复制到验证表结构体 table中
-  strcpy(p->username, str);
+  strncpy(p->username, username, strlen(username));
   return 0;
 }
 
@@ -217,7 +220,6 @@ int getPassPop(int sockfd, table_t *p) {
   memset(buf, 0, sizeof(buf));
   int len = read(sockfd, buf, sizeof(buf) - 1);
   while(len == 0) {
-
     len = read(sockfd, buf, sizeof(buf) - 1);
   }
   buf[len] = '\0';
@@ -234,6 +236,7 @@ int getPassPop(int sockfd, table_t *p) {
   strncpy(password, passStart, passLen);
   password[passLen] = '\0';
 
+  printf("password = %s\n", password);
   strncpy(p->password, password, sizeof(p->password));
 
   free(password);

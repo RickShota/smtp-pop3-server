@@ -7,6 +7,7 @@
 #include "net.h"
 #include "mailrecv.h"
 #include "devicectrl.h"
+#include "devicereponse.h"
 #include "common.h"
 
 int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
@@ -90,8 +91,9 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
   return 0;
 }
 
-int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
+int pop3Connection(int sockfd, table_t *table) {
   printf("开始处理pop3连接...\n");
+
   char *response_server = "+OK Pop3 server\r\n";
   char *response_ok = "+OK \r\n";
   char *response_300 = "+0K 1 300 \r\n";
@@ -99,19 +101,16 @@ int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
   char *response_120 = "+0K 120 octets \r\n";
   char *response_send = "\r\n.\r\n";
 
-  sockfd = accept(sockfd, NULL, NULL);
-  write(sockfd, response_server, strlen(response_server));
-
   char buf[1024] = "";
-  table_t table = { 0 };
 
-  if(getUserPop(sockfd, &table) < 0) {
+  write(sockfd, response_server, strlen(response_server));
+  if(getUserPop(sockfd, table) < 0) {
     perror("getUserPop error");
     return -1;
   }
 
   write(sockfd, response_ok, strlen(response_ok));
-  if(getPassPop(sockfd, &table) < 0) {
+  if(getPassPop(sockfd, table) < 0) {
     perror("getPassPop error");
     return -1;
   }
@@ -137,7 +136,14 @@ int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
   }
 
   write(sockfd, response_120, strlen(response_120));
-  createMail(sockfd, pmail, subject);
+  // 发送1枚邮件
+  char emailName[128] = "";
+  if(getSendMailName(table->username, emailName) == NULL) {
+    perror("no email could be send");
+  } else {
+    sendMail(sockfd, emailName);
+    printf("成功发送邮件%s\n", emailName);
+  }
 
   write(sockfd, response_send, strlen(response_send));
   read(sockfd, buf, sizeof(buf) - 1);
@@ -155,5 +161,6 @@ int pop3Connection(int sockfd, sub_t *subject, table_t *p, mail_t *pmail) {
 
   write(sockfd, response_ok, strlen(response_ok));
   printf("pop3连接结束\n");
+
   return 0;
 }

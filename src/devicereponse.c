@@ -12,7 +12,7 @@ int sendMail(int sockfd, const char *mailName) {
     perror("sendMail: open error");
     return -1;
   }
-
+  // TODO 更新时间
   char buf[MAX_MAIL];
   if(fread(buf, 1, sizeof(buf) - 1, fp) < 0)
     return -1;

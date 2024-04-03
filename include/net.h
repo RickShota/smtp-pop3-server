@@ -12,6 +12,6 @@
 int handleConnection(int sockfd, table_t *table, mail_t *pmail);
 
 // 处理与客户端的POP3连接，进行邮件的收取、删除等操作
-int pop3Connection(int cfd, sub_t *subject, table_t *p, mail_t *pmail);
+int pop3Connection(int cfd, table_t *p);
 
 #endif
