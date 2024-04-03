@@ -52,23 +52,16 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
   printf("尝试控制设备...\n\n");
   char command[32];
   strcpy(command, subject->command);
-  if(strncmp(command, "8LED", 4) || strncmp(command, "7SHU", 4) || strncmp(command, "Moto", 4)) {
-    emitCommand(subject);
-  }
-  char str[] = "changeTable";
-  if(!strncasecmp(command, str, strlen(str))) {
-    emitUpdate(pmail, subject);
-    printf("命令行: %s\n", subject->command);
-    printf("灯号数: %d\n", subject->bulb);
-    printf("控制信号: %d\n\n", subject->bulb_ctl);
-    return 0;
-  }
-
-  strcpy(subject->command, command);
   printf("命令行: %s\n", subject->command);
   printf("灯号数: %d\n", subject->bulb);
   printf("控制信号: %d\n\n", subject->bulb_ctl);
-
+  if(!strncasecmp(command, "CHANGTABLE", 11)) {
+    emitUpdate(pmail, subject);
+    return 0;
+  } else if(strncmp(command, "8LED", 4) || strncmp(command, "7SHU", 4) || strncmp(command, "Moto", 4)) {
+    emitCommand(subject);
+    return 0;
+  }
   return -1;
 }
 
@@ -76,18 +69,26 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
 int emitUpdate(const mail_t *pmail, sub_t *subject) {
   char command[32] = "";
   strcpy(command, subject->command);
-  if(strncpy(command, "changTable", 11)) {
-    FILE *fd = fopen(USER_FILE, "w");
 
-    char attr[1024 * 10] = "";
-    strcpy(attr, pmail->attr);
-    if(fwrite(attr, sizeof(char), strlen(attr), fd) < strlen(attr)) {
-      perror("fwrite error");
-      fclose(fd);
+  if(strncpy(command, "CHANGTABLE", 11)) {
+    int fd = open(USER_FILE, O_WRONLY);
+    if(fd == -1) {
+      perror("open");
       return -1;
     }
-    fclose(fd);
-    printf("attr: %s\n", attr);
+    char attr[1024 * 10] = "";
+    strcpy(attr, pmail->attr);
+    // 加锁
+    flock(fd, LOCK_EX);
+    if(write(fd, attr, strlen(attr)) < strlen(attr)) {
+      perror("fwrite error");
+      flock(fd, LOCK_UN); // 解锁
+      close(fd);
+      return -1;
+    }
+    printf("table.txt更新成功：\n%s\n", attr);
+    flock(fd, LOCK_UN); // 解锁
+    close(fd);
     return 0;
   }
   return -1;
@@ -118,7 +119,6 @@ int emitCommand(sub_t *subject) {
       return -1;
     }
     subject->result = 0;
-
     printf("七段数码管控制成功!\n");
     return 0;
   } else if(strcmp(command, "MOTO") == 0) {
@@ -130,12 +130,9 @@ int emitCommand(sub_t *subject) {
     subject->result = 0;
     printf("电动机控制成功\n");
     return 0;
-  } else if(!strncmp(command, "CHANGTABLE", 10)) {
-    printf("table.txt更新成功\n");
-    return 0;
   } else {
-    printf("识别不了命令字控制:\n");
-    return -2;
+    printf("识别不了的指令: %s\n", command);
+    return -1;
   }
 }
 
@@ -222,11 +219,11 @@ int createMail(int sockfd, const mail_t *pmail, sub_t *subject) {
 
 // 获取当前本地时间，并格式化为字符串
 char *getCurtime() {
-  time_t raw_time;
-  struct tm *time_info;
-  char *time_str = malloc(128 * sizeof(char));
-  time(&raw_time);
-  time_info = localtime(&raw_time);
-  strftime(time_str, 128, "%c", time_info);
-  return time_str;
+  time_t raw_time; // 存储时间的原始数据
+  struct tm *time_info; // 存储时间的结构体指针
+  char *time_str = malloc(128 * sizeof(char)); // 存储时间字符串
+  time(&raw_time); // 获取当前时间的原始数据
+  time_info = localtime(&raw_time); // 将原始时间数据转换为本地时间
+  strftime(time_str, 128, "%c", time_info); // 格式化时间为字符串并存储
+  return time_str; // 返回时间字符串指针
 }
