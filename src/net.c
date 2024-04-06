@@ -2,7 +2,7 @@
  * @file net.c
  * @author 黄瑞
  * @date 2024.3.30
- * @details 网络套接字模块源文件
+ * @brief 网络套接字模块源文件
 */
 #include "net.h"
 #include "mailrecv.h"
@@ -10,9 +10,9 @@
 #include "devicereponse.h"
 #include "common.h"
 
-int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
+int handleConnection(int sockfd, mail_t *pmail) {
   if(sockfd < 2 || pmail == NULL) {
-    perror("handleConnection params error");
+    perror("handleConnection: args error");
     exit(EXIT_FAILURE);
   }
   printf("开始处理SMTP连接...\n");
@@ -26,8 +26,10 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
   char *response_354 = "354 End data with <CR><LF>.<CR><LF>\r\n";
   char *response_221 = "221 Bye\r\n";
 
-  write(sockfd, response220, strlen(response220));
   char buf[1024] = "";
+  table_t table = { 0 };
+
+  write(sockfd, response220, strlen(response220));
   read(sockfd, buf, sizeof(buf) - 1);
   if(strncmp(buf, "HELO", 4) && strncmp(buf, "EHLO", 4)) {
     perror("HELO or EHLO error");
@@ -42,13 +44,13 @@ int handleConnection(int sockfd, table_t *table, mail_t *pmail) {
   }
 
   write(sockfd, response334_user, strlen(response334_user));
-  if(getUsername(sockfd, table)) {
+  if(getUsername(sockfd, &table)) {
     perror("getUsername error");
     return -1;
   }
 
   write(sockfd, response334_pass, strlen(response334_pass));
-  if(getPassword(sockfd, table)) {
+  if(getPassword(sockfd, &table)) {
     perror("getPassword error");
     return -1;
   }

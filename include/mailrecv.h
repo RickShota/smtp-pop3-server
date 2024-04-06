@@ -2,7 +2,7 @@
  * @file mailrecv.h
  * @author 黄瑞
  * @date 2024.3.31
- * @details 邮件接收-SMTP通讯过程头文件
+ * @brief 邮件接收-SMTP通讯过程头文件
 */
 #ifndef MAILRECV_H
 #define MAILRECV_H

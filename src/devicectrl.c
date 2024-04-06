@@ -2,10 +2,11 @@
  * @file devicectrl.c
  * @author 黄瑞
  * @date 2024.4.2
- * @details 设备控制模块源文件
+ * @brief 设备控制模块源文件
 */
 #include "devicectrl.h"
 
+// 从邮件地址提取用户名
 char *getName(const char *email) {
   char *name;
   char *atSymbol = strchr(email, '@');
@@ -20,6 +21,7 @@ char *getName(const char *email) {
   return name;
 }
 
+// 文件中读取内容，并将内容存储到一个动态分配的字符数组中
 char *readFile(const char *filename) {
   FILE *file = fopen(filename, "rb");
   if(file == NULL) {
@@ -67,6 +69,10 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
 
 // 执行更新操作，将邮件附件内容写入"table.txt"文件中
 int emitUpdate(const mail_t *pmail, sub_t *subject) {
+  if(pmail == NULL || subject == NULL) {
+    perror("emitUpdate: args is null");
+    return -1;
+  }
   char command[32] = "";
   strcpy(command, subject->command);
 
@@ -78,8 +84,7 @@ int emitUpdate(const mail_t *pmail, sub_t *subject) {
     }
     char attr[1024 * 10] = "";
     strcpy(attr, pmail->attr);
-    // 加锁
-    flock(fd, LOCK_EX);
+    flock(fd, LOCK_EX); // 加锁
     if(write(fd, attr, strlen(attr)) < strlen(attr)) {
       perror("fwrite error");
       flock(fd, LOCK_UN); // 解锁
@@ -90,8 +95,10 @@ int emitUpdate(const mail_t *pmail, sub_t *subject) {
     flock(fd, LOCK_UN); // 解锁
     close(fd);
     return 0;
+  } else {
+    perror("cmd != CHANGTABLE");
+    return -1;
   }
-  return -1;
 }
 
 // 根据主题控制结构中的命令执行相应的控制操作
@@ -128,7 +135,7 @@ int emitCommand(sub_t *subject) {
       return -1;
     }
     subject->result = 0;
-    printf("电动机控制成功\n");
+    printf("电动机控制成功!\n");
     return 0;
   } else {
     printf("识别不了的指令: %s\n", command);
@@ -138,6 +145,10 @@ int emitCommand(sub_t *subject) {
 
 // 生成一个新的邮件文件名
 char *getCreatMailName(const char *userName, char *mailName) {
+  if(userName == NULL || mailName == NULL) {
+    perror("getCreatMailName: args is null");
+    return NULL;
+  }
   printf("开始生成新的邮件文件名...\n");
   char buf[128];
   for(int i = 1;; i++) {
@@ -162,6 +173,10 @@ char *getCreatMailName(const char *userName, char *mailName) {
 
 // 获取要发送的邮件文件名
 char *getSendMailName(const char *userName, char *mailName) {
+  if(userName == NULL || mailName == NULL) {
+    perror("getCreatMailName: args is null");
+    return NULL;
+  }
   char buf[128];
   for(int i = 0; i < 100; i++) {
     char num[10];
@@ -210,8 +225,9 @@ int createMail(int sockfd, const mail_t *pmail, sub_t *subject) {
 
   printf("------------------\n");
   fclose(file);
-
+  // 从文件读取内容
   char *fileContent = readFile(filename);
+  // 反馈
   send(sockfd, fileContent, strlen(fileContent), 0);
   free(fileContent);
   return 0;

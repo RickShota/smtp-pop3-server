@@ -2,7 +2,7 @@
  * @file common.h
  * @author 黄瑞
  * @date 2024.3.30
- * @details 定义通用结构体和常量头文件
+ * @brief 定义通用结构体和常量头文件
 */
 #ifndef COMMON_H
 #define COMMON_H
@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/epoll.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,7 +26,10 @@
 
 #define MAX_MAIL (8 * 1024)
 #define MAX_ATTACHMENT (7 * 1024)
+
 #define USER_FILE "database/table.txt"
+#define MAX_EVENTS 10
+
 #define IP "192.168.125.133"
 #define SMTP_PORT 10000
 #define POP3_PORT 10001

@@ -2,7 +2,7 @@
  * @file pop3_main.c
  * @author 黄瑞
  * @date 2024.4.3
- * @details pop3服务main源文件
+ * @brief pop3服务main源文件
  * @version 0.5
 */
 #include "common.h"
@@ -41,7 +41,7 @@ int main(int argc, char const *argv[]) {
     perror("listen error");
     return -1;
   }
-  printf("POP3 is server on %s:%d...\n", IP, POP3_PORT);
+  printf("POP3 server is listening on %s:%d...\n", IP, POP3_PORT);
 
   while(1) {
     printf("POP3准备连接，等待三次握手...\n");

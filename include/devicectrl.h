@@ -2,7 +2,7 @@
  * @file devicectrl.h
  * @author 黄瑞
  * @date 2024.4.1
- * @details 设备控制模块头文件
+ * @brief 设备控制模块头文件
 */
 #ifndef DEVICECTRL_H
 #define DEVICECTRL_H
