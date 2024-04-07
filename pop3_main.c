@@ -13,11 +13,9 @@ void *handlePOP3(void *p_cid) {
   int cid = *((int *)p_cid);
   free(p_cid); p_cid = NULL;
 
-  mail_t *mail = malloc(sizeof(mail_t));
   table_t table = { 0 };
   pop3Connection(cid, &table);
 
-  free(mail); mail = NULL;
   close(cid);
   printf("\n---POP3子线程结束---pid = %lu\n", pthread_self());
   pthread_exit(NULL);

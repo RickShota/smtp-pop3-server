@@ -6,4 +6,10 @@
 */
 #include "common.h"
 
+/**
+ * @brief 向套接字发送邮件
+ * @param sockfd 套接字
+ * @param mailName 要发送的邮件文件路径
+ * @return int 成功返回 0，否则返回 -1
+ */
 int sendMail(int sockfd, const char *mailName);

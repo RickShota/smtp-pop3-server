@@ -142,8 +142,8 @@ int getBody(int sockfd, mail_t *pmail) {
 
 // 解析邮件附件内容并存储
 int getSlave(int sockfd, mail_t *pmail) {
-  char temp[MAX_ATTACHMENT];
-  int len;
+  char temp[MAX_ATTACHMENT] = "";
+  int len = 0;
   char *pos = NULL;
   // 循环查找邮件正文中是否包含附件信息
   while((pos = strstr(pmail->raw, "filename=")) != NULL) {
@@ -186,7 +186,7 @@ int getUserPop(int sockfd, table_t *p) {
   printf("buf = %s\n", buf);
   // 查找用户名起始位
   char *start = strstr(buf, "USER");
-  if(start == NULL) {
+  if(NULL == start) {
     printf("username not found\n");
     return 1;
   }
@@ -218,21 +218,25 @@ int getPassPop(int sockfd, table_t *p) {
   }
   buf[len] = '\0';
   char *passStart = strstr(buf, "PASS ");
+  if(passStart == NULL) {
+    perror("strstr");
+    return -1;
+  }
   passStart += strlen("PASS ");
 
   char *passEnd = strchr(passStart, '\r');
   if(passEnd == NULL) {
+    perror("strchr");
     return -1;
   }
 
   int passLen = passEnd - passStart;
-  char *password = malloc(passLen + 1);
+  char password[10] = "";
   strncpy(password, passStart, passLen);
   password[passLen] = '\0';
 
   printf("password = %s\n", password);
   strncpy(p->password, password, sizeof(p->password));
 
-  free(password);
   return 0;
 }

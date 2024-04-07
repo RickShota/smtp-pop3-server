@@ -39,11 +39,11 @@ int verPassword(const char *password, table_t *userTable) {
   return -1;
 }
 
-// 解析邮件
+// 解析邮件标题提取命令
 int parseMail(struct mail *pmail, sub_t *subject) {
   if(NULL == pmail || NULL == subject)
     return -1;
-  printf("开始解析邮件...\n");
+  printf("开始解析邮件命令...\n");
   const char *sub = "Subject:"; // 起始标记字符串
   char *start = strstr(pmail->raw, sub) + 9; // 定位到起始位置之后
   if(NULL == start)
@@ -70,10 +70,17 @@ int parseMail(struct mail *pmail, sub_t *subject) {
   } else if(!strcmp(command, "MOTO")) {
     const char *reva = strtok(NULL, " ");
     subject->reva = atoi(reva);
-  } else if(!strncmp(command, "CHANGETABLE", 11)) {
-    printf("table.txt更新成功\n");
-  } else
+  } else if(!strncmp(command, "CHANGTABLE", 10)) {
+
+  } else {
+    printf("命令不合法\n");
     return -1;
+  }
+  printf("command=%s\n", subject->command);
+  printf("bulb=%d\n", subject->bulb);
+  printf("bulb_ctl=%d\n", subject->bulb_ctl);
+  printf("reva=%d\n", subject->reva);
+  printf("signal=%d\n", subject->signal);
   printf("解析成功!\n\n");
   return 0;
 }

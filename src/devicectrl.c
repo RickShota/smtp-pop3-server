@@ -54,17 +54,16 @@ int subjectControl(const mail_t *pmail, sub_t *subject) {
   printf("尝试控制设备...\n\n");
   char command[32];
   strcpy(command, subject->command);
-  printf("命令行: %s\n", subject->command);
-  printf("灯号数: %d\n", subject->bulb);
-  printf("控制信号: %d\n\n", subject->bulb_ctl);
-  if(!strncasecmp(command, "CHANGTABLE", 11)) {
+  if(!strncmp(command, "CHANGTABLE", 10)) {
     emitUpdate(pmail, subject);
     return 0;
-  } else if(strncmp(command, "8LED", 4) || strncmp(command, "7SHU", 4) || strncmp(command, "Moto", 4)) {
+  } else if(!strncmp(command, "8LED", 4) || !strncmp(command, "7SHU", 4) || !strncmp(command, "Moto", 4)) {
     emitCommand(subject);
     return 0;
+  } else {
+    printf("识别不了的指令: %s\n", command);
+    return -1;
   }
-  return -1;
 }
 
 // 执行更新操作，将邮件附件内容写入"table.txt"文件中
@@ -73,32 +72,24 @@ int emitUpdate(const mail_t *pmail, sub_t *subject) {
     perror("emitUpdate: args is null");
     return -1;
   }
-  char command[32] = "";
-  strcpy(command, subject->command);
-
-  if(strncpy(command, "CHANGTABLE", 11)) {
-    int fd = open(USER_FILE, O_WRONLY);
-    if(fd == -1) {
-      perror("open");
-      return -1;
-    }
-    char attr[1024 * 10] = "";
-    strcpy(attr, pmail->attr);
-    flock(fd, LOCK_EX); // 加锁
-    if(write(fd, attr, strlen(attr)) < strlen(attr)) {
-      perror("fwrite error");
-      flock(fd, LOCK_UN); // 解锁
-      close(fd);
-      return -1;
-    }
-    printf("table.txt更新成功：\n%s\n", attr);
-    flock(fd, LOCK_UN); // 解锁
-    close(fd);
-    return 0;
-  } else {
-    perror("cmd != CHANGTABLE");
+  int fd = open(USER_FILE, O_WRONLY);
+  if(fd == -1) {
+    perror("open");
     return -1;
   }
+  flock(fd, LOCK_EX); // 加锁
+  char attr[1024 * 10] = "";
+  strcpy(attr, pmail->attr);
+  if(write(fd, attr, strlen(attr)) < strlen(attr)) {
+    perror("fwrite error");
+    flock(fd, LOCK_UN); // 解锁
+    close(fd);
+    return -1;
+  }
+  printf("table.txt更新成功：\n%s\n", attr);
+  flock(fd, LOCK_UN); // 解锁
+  close(fd);
+  return 0;
 }
 
 // 根据主题控制结构中的命令执行相应的控制操作
@@ -108,21 +99,21 @@ int emitCommand(sub_t *subject) {
   if(strcmp(command, "8LED") == 0) {
     if(subject->bulb < 1 || subject->bulb > 8) {
       subject->result = -1;
-      printf("灯泡的号数有误:%d, 应为1~8\n", subject->bulb);
+      printf("控制失败：灯泡的号数有误:%d, 应为1~8\n", subject->bulb);
       return -1;
     }
     if(subject->bulb_ctl != 0 && subject->bulb_ctl != 1) {
       subject->result = -1;
-      printf("灯泡控制信号有误:%d, 应为0或1\n", subject->bulb);
+      printf("控制失败：灯泡控制信号有误:%d, 应为0或1\n", subject->bulb);
       return -1;
     }
     subject->result = 0;
-    printf("\n%d号灯泡状态为 %d\n\n", subject->bulb, subject->bulb_ctl);
+    printf("\n控制成功：%d号灯泡 %s\n\n", subject->bulb, subject->bulb_ctl == 0 ? "关闭" : "开启");
     return 0;
   } else if(strcmp(command, "7SHU") == 0) {
     if(subject->signal < 0 || subject->signal > 99) {
       subject->result = -1;
-      printf("调用七段数码管控制函数失败,信号不合法\n");
+      printf("七段数码管控制失败：信号不合法\n");
       return -1;
     }
     subject->result = 0;
@@ -131,16 +122,14 @@ int emitCommand(sub_t *subject) {
   } else if(strcmp(command, "MOTO") == 0) {
     if(subject->reva < 0 || subject->reva > 999) {
       subject->result = -1;
-      printf("调用电动机控制失败\n");
+      printf("电动机控制失败：参数不合法\n");
       return -1;
     }
     subject->result = 0;
     printf("电动机控制成功!\n");
     return 0;
-  } else {
-    printf("识别不了的指令: %s\n", command);
-    return -1;
   }
+  return -1;
 }
 
 // 生成一个新的邮件文件名
@@ -208,20 +197,19 @@ int createMail(int sockfd, const mail_t *pmail, sub_t *subject) {
   printf("%s\n", time);
   FILE *file = fopen(filename, "w");
 
-  fprintf(file, "Message-ID: <%s>\\r\\n\r\n", "001101c93cc4$1ed2ae30$5400a8c0@liuxiaoforever");
-  fprintf(file, "From: \"%s\" <%s>\\r\\n\r\n", sendName, pmail->send);
-  fprintf(file, "To: %s<%s>\\r\\n\r\n", recvName, pmail->recv);
-  fprintf(file, "Subject:%s %d %d Control %s! \\r\\n\r\n", subject->command, subject->bulb, subject->signal, subject->result == 0 ? "Success" : "Fail");
+  fprintf(file, "Message-ID: <%s>\r\n", "001101c93cc4$1ed2ae30$5400a8c0@liuxiaoforever");
+  fprintf(file, "From: \"%s\" <%s@qq.com>\r\n", sendName, pmail->send);
+  fprintf(file, "To: %s<%s@qq.com>\r\n", recvName, pmail->recv);
+  fprintf(file, "Subject:%s %d %d %d Control %s! \r\n", subject->command, subject->bulb, subject->bulb_ctl, subject->signal, subject->result == 0 ? "Success" : "Fail");
 
-  fprintf(file, "Date: %s\\r\\n\r\n", time);
-  fprintf(file, "MIME-Version: 1.0\\r\\n\r\n");
-  fprintf(file, "Content-Type: multipart/alternative; \\r\\n\r\n");
-  fprintf(file, "X-Priority: 3..X-MSMail-Priority: Normal\\r\\n\r\n");
-
-  fprintf(file, "X-Mailer: Microsoft Outlook Express 6.00.2900.3138\\r\\n\r\n");
-  fprintf(file, "X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2900.3198\\r\\n\r\n");
-  fprintf(file, "\\r\\n\r\n");
-  fprintf(file, "This is response of %s's device!\\r\\n\r\n", pmail->recv);
+  fprintf(file, "Date: %s\r\n", time);
+  fprintf(file, "MIME-Version: 1.0\r\n");
+  fprintf(file, "Content-Type: multipart/alternative; \r\n");
+  fprintf(file, "X-Priority: 3..X-MSMail-Priority: Normal\r\n");
+  fprintf(file, "X-Mailer: Microsoft Outlook Express 6.00.2900.3138\r\n");
+  fprintf(file, "X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2900.3198\r\n");
+  fprintf(file, "\r\n");
+  fprintf(file, "This is response of %s's device!\r\n", pmail->recv);
 
   printf("------------------\n");
   fclose(file);
